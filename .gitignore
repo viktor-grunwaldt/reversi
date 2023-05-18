@@ -1,0 +1,13 @@
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+
+# Generated files
+**/target/
+**/Cargo.lock
+**/Cargo.toml.orig
+**/*.rs.bk
+
+# Visual Studio Code
+.vscode/
