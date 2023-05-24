@@ -1,6 +1,5 @@
-use std::{fmt, ops::BitAnd};
 use itertools::Itertools;
-
+use std::{fmt, ops::BitAnd};
 
 /// Represents the current state of the game.
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -8,7 +7,7 @@ pub enum Player {
     Black,
     White,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Board {
     pub disks: [u64; 2],
 }
@@ -19,9 +18,9 @@ impl fmt::Display for Board {
         let mut bl = self.disks[0];
         let mut wh = self.disks[1];
 
-        for i in 0..8 {
-            for j in 0..8 {
-                charr[i][j] = match (bl & 1, wh & 1) {
+        for row in &mut charr {
+            for j in row.iter_mut().take(8) {
+                *j = match (bl & 1, wh & 1) {
                     (0, 0) => '.',
                     (1, 0) => '#',
                     (0, 1) => 'O',
@@ -52,10 +51,10 @@ pub fn show_possible_moves(b: Board, p: Player) -> String {
         .collect_vec();
     let idx = p as usize;
     let mut moves = generate_moves(b.disks[idx], b.disks[idx ^ 1]);
-    for i in 0..8 {
-        for j in 0..8 {
+    for row in charr.iter_mut().take(8) {
+        for e in row {
             if moves.bitand(1) != 0 {
-                charr[i][j] = '*';
+                *e = '*';
             }
             moves >>= 1;
         }
@@ -93,14 +92,15 @@ static RSHIFTS: [u64; 8] = [
     0, /* Up. */
     0, /* Up-right. */
 ];
-
-static CORNER_MASK: u64 = 0x8100000000000081;
+// XX...
+// X....
+pub static CORNER_MASK: u64 = 0x8100_0000_0000_0081;
 
 fn shift(disks: u64, dir: usize) -> u64 {
     MASKS[dir]
         & match dir {
             ..=3 => disks >> RSHIFTS[dir],
-            ..=7 => disks << LSHIFTS[dir],
+            4..=7 => disks << LSHIFTS[dir],
             _ => panic!(),
         }
 }
@@ -171,7 +171,7 @@ pub fn resolve_move(my_disks: u64, opp_disks: u64, idx: usize) -> [u64; 2] {
     [my_disks, opp_disks]
 }
 
-fn disks_on_border(my_disks: u64, opp_disks: u64) -> (u64, u64) {
+pub fn disks_on_border(my_disks: u64, opp_disks: u64) -> (u64, u64) {
     let empty_cells = !(my_disks | opp_disks);
     let mut my_borders = 0;
     let mut opp_borders = 0;
@@ -182,21 +182,6 @@ fn disks_on_border(my_disks: u64, opp_disks: u64) -> (u64, u64) {
     }
 
     (my_borders, opp_borders)
-}
-/* uses 3 factors to evaluate the position: move count (mobility) corner count () */
-pub fn hval(my_disks: u64, opp_disks: u64, my_moves: u64, opp_moves: u64) -> i32 {
-    /* end of game, win bonus is ~1 million */
-    if my_moves == 0 && opp_moves == 0 {
-        return (my_disks.count_ones() as i32 - opp_disks.count_ones() as i32) << 20;
-    }
-    let my_corners = (my_disks & CORNER_MASK).count_ones() as i32;
-    let opp_corners = (opp_disks & CORNER_MASK).count_ones() as i32;
-    let mut score = 0;
-    let (my_borders, opp_borders) = disks_on_border(my_disks, opp_disks);
-    score += (my_corners - opp_corners) * 16;
-    score += (my_moves.count_ones() as i32 - opp_moves.count_ones() as i32) * 2;
-    score += opp_borders.count_ones() as i32 - my_borders.count_ones() as i32;
-    score
 }
 
 pub fn make_move(b: Board, p: Player, row: usize, col: usize) -> Board {
@@ -214,7 +199,7 @@ pub fn make_move(b: Board, p: Player, row: usize, col: usize) -> Board {
 
 pub fn init_board() -> Board {
     Board {
-        disks: [0x00000010_08000000, 0x00000008_10000000],
+        disks: [0x0000_0010_0800_0000, 0x0000_0008_1000_0000],
     }
 }
 
@@ -222,6 +207,6 @@ pub fn init_board() -> Board {
 mod tests {
     #[test]
     fn foo() {
-        assert!(true);
+        todo!()
     }
 }

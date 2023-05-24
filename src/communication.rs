@@ -14,11 +14,11 @@ pub fn set_up() {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub enum Response {
-    UGO(f64, f64),
-    HEDID(f64, f64, Option<(usize, usize)>),
-    ONEMORE,
-    BYE,
-    FAIL,
+    Ugo(f64, f64),
+    Hedid(f64, f64, Option<(usize, usize)>),
+    Onemore,
+    Bye,
+    Fail,
 }
 
 fn p_float<'a, E>(i: &'a str) -> IResult<&'a str, f64, E>
@@ -33,7 +33,7 @@ where
     E: ParseError<&'a str>,
 {
     let parser = preceded(tag("UGO"), pair(p_float, p_float));
-    map(parser, |(x, y)| Response::UGO(x, y))(i)
+    map(parser, |(x, y)| Response::Ugo(x, y))(i)
 }
 
 fn p_int<'a, E>(i: &'a str) -> IResult<&'a str, i32, E>
@@ -56,7 +56,7 @@ where
 {
     let parser = preceded(tag("HEDID"), tuple((p_float, p_float, p_int, p_int)));
     map(parser, |(x, y, a, b)| {
-        Response::HEDID(x, y, convert_move(a, b))
+        Response::Hedid(x, y, convert_move(a, b))
     })(i)
 }
 fn parse_response<'a, E>(i: &'a str) -> IResult<&'a str, Response, E>
@@ -64,8 +64,8 @@ where
     E: ParseError<&'a str> + FromExternalError<&'a str, std::num::ParseIntError>,
 {
     alt((
-        value(Response::ONEMORE, tag("ONEMORE")),
-        value(Response::BYE, tag("BYE")),
+        value(Response::Onemore, tag("ONEMORE")),
+        value(Response::Bye, tag("BYE")),
         parse_ugo,
         parse_hedid,
     ))(i)
@@ -77,17 +77,17 @@ pub fn read_response() -> Response {
         .expect("Error reading input");
     parse_response::<()>(&input)
         .map(|res| res.1)
-        .unwrap_or(Response::FAIL)
+        .unwrap_or(Response::Fail)
 }
 
-pub fn send_message(my_move: Option<(usize, usize)>, transpose_board:bool) {
+pub fn send_message(my_move: Option<(usize, usize)>, transpose_board: bool) {
     let (x, y) = match my_move {
         Some((row, col)) => (row as i32, col as i32),
         None => (-1, -1),
     };
     if transpose_board {
         println!("IDO {} {}", y, x);
-    }else {
+    } else {
         println!("IDO {} {}", x, y);
     }
 }
@@ -97,18 +97,18 @@ mod tests {
     use crate::communication::*;
     #[test]
     fn test_onemore() {
-        assert_eq!(parse_response::<()>("ONEMORE"), Ok(("", Response::ONEMORE)));
+        assert_eq!(parse_response::<()>("ONEMORE"), Ok(("", Response::Onemore)));
         assert_eq!(
             parse_response::<()>("ONEMORE-1234"),
-            Ok(("-1234", Response::ONEMORE))
+            Ok(("-1234", Response::Onemore))
         );
     }
     #[test]
     fn test_bye() {
-        assert_eq!(parse_response::<()>("BYE"), Ok(("", Response::BYE)));
+        assert_eq!(parse_response::<()>("BYE"), Ok(("", Response::Bye)));
         assert_eq!(
             parse_response::<()>("BYE-1234"),
-            Ok(("-1234", Response::BYE))
+            Ok(("-1234", Response::Bye))
         );
     }
     #[test]
@@ -132,12 +132,12 @@ mod tests {
     fn test_ugo() {
         assert_eq!(
             parse_ugo::<()>("UGO 59.6969 0.0"),
-            Ok(("", Response::UGO(59.6969, 0_f64)))
+            Ok(("", Response::Ugo(59.6969, 0_f64)))
         );
         assert_eq!(parse_ugo::<()>("UGO 59.6969"), Err(nom::Err::Error(())));
         assert_eq!(
             parse_ugo::<()>("UGO 59.25 16.5"),
-            Ok(("", Response::UGO(59.25, 16.5)))
+            Ok(("", Response::Ugo(59.25, 16.5)))
         );
         assert_eq!(parse_ugo::<()>("UGO     "), Err(nom::Err::Error(())));
         assert_eq!(parse_ugo::<()>(" UGO     "), Err(nom::Err::Error(())));
@@ -147,11 +147,11 @@ mod tests {
     fn test_hedid() {
         assert_eq!(
             parse_hedid::<()>("HEDID 59.25 16.5 0 0"),
-            Ok(("", Response::HEDID(59.25, 16.5, Some((0, 0)))))
+            Ok(("", Response::Hedid(59.25, 16.5, Some((0, 0)))))
         );
         assert_eq!(
             parse_hedid::<()>("HEDID 59.25 16.5 -1 -1"),
-            Ok(("", Response::HEDID(59.25, 16.5, None)))
+            Ok(("", Response::Hedid(59.25, 16.5, None)))
         );
         assert_eq!(
             parse_hedid::<()>("UGO 59.6969 0.0"),
