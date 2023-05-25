@@ -18,7 +18,7 @@ fn init_state() -> (Board, Player) {
 
 fn play(mode: Mode, rng: &mut ThreadRng) {
     let (mut b, mut p) = init_state();
-    let depth_to_eval_budget = |d| if d<=2 {1<<10} else {1<<17};
+    let depth_to_eval_budget = |d| if d<=2 {1<<8} else {1<<17};
     set_up();
     loop {
         match read_response() {
