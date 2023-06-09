@@ -177,12 +177,17 @@ pub fn compute_move(
     b: Board,
     p: Player,
     start_depth: usize,
-    total_eval_count: u32,
+    // total_eval_count: u32,
     use_sort: bool,
 ) -> Option<(usize, usize)> {
     if !has_valid_move(b, p) {
         return None;
     }
+    let total_eval_count = match start_depth {
+        0..=2 => 1<<8,
+        3..=4 => 1<<16,
+        _ => 1<<22, // 23 and 24 resulted in timeouts
+    };
     let player_idx = p as usize;
     let move_idx = ids_negamax(
         b.disks[player_idx],

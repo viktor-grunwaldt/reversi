@@ -110,6 +110,7 @@ pub fn generate_moves(my_disks: u64, opp_disks: u64) -> u64 {
     let mut x;
     let empty_cells = !(my_disks | opp_disks);
     // if compiler is smart, he will either unroll the loop or use simd instructions
+    // https://godbolt.org/z/x7oG7s6EY
     for dir in 0..8 {
         /* Get opponent disks adjacent to my disks in direction dir. */
         x = shift(my_disks, dir) & opp_disks;

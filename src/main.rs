@@ -5,21 +5,19 @@ mod communication;
 
 use args::{Cli, Mode};
 use board::{init_board, make_move, Board, Player};
-use board_ai::{pick_random_move, compute_move};
+use board_ai::{compute_move, pick_random_move};
 use clap::Parser;
 use communication::{read_response, send_message, set_up, Response};
 use rand::{rngs::ThreadRng, thread_rng};
-
 
 fn init_state() -> (Board, Player) {
     (init_board(), Player::Black)
 }
 
-
 fn play(mode: Mode, rng: &mut ThreadRng) {
     let (mut b, mut p) = init_state();
-    let depth_to_eval_budget = |d| if d<=2 {1<<8} else {1<<17};
     set_up();
+
     loop {
         match read_response() {
             // first move
@@ -32,7 +30,6 @@ fn play(mode: Mode, rng: &mut ThreadRng) {
                     b = make_move(b, p.enemy(), row, col);
                 }
             }
-
             Response::Onemore => {
                 (b, p) = init_state();
                 set_up();
@@ -49,11 +46,11 @@ fn play(mode: Mode, rng: &mut ThreadRng) {
         }
         let my_move = match mode {
             Mode::Random => pick_random_move(b, p, rng),
-            Mode::Minimax { depth } 
-            => compute_move(b, p, depth, depth_to_eval_budget(depth), false),
-            Mode::MinimaxSorted { depth }
-            => compute_move(b, p, depth, depth_to_eval_budget(depth), true)
+            Mode::Minimax => compute_move(b, p, 4, false),
+            Mode::MinimaxSorted => compute_move(b, p, 4, true),
+            Mode::TournamentMode => compute_move(b, p, 6, true),
         };
+
         if let Some((row, col)) = my_move {
             b = make_move(b, p, row, col);
         }
