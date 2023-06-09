@@ -204,10 +204,4 @@ pub fn init_board() -> Board {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn foo() {
-        todo!()
-    }
-}
+
